@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss';
+import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
@@ -8,25 +8,17 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      gridTemplateColumns: {
-        '13': 'repeat(13, minmax(0, 1fr))',
-      },
       colors: {
-        blue: {
-          400: '#2589FE',
-          500: '#0070F3',
-          600: '#2F6FEB',
-        },
-      },
-    },
-    keyframes: {
-      shimmer: {
-        '100%': {
-          transform: 'translateX(100%)',
+        brand: {
+          DEFAULT: '#f1b4af',
+          light: '#f7d1cd',
+          dark: '#e08a83',
         },
       },
     },
   },
-  plugins: [require('@tailwindcss/forms')],
-};
-export default config;
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
+}
+export default config
