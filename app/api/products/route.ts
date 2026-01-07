@@ -47,10 +47,11 @@ export async function POST(request: NextRequest) {
 
     if (!categoryRecord) {
       console.log('DEBUG: Category not found, creating:', finalCategoryName)
+      const safeCategoryName = String(finalCategoryName || 'Uncategorized')
       categoryRecord = await prisma.category.create({
         data: {
-          name: finalCategoryName,
-          slug: finalCategoryName.toLowerCase()
+          name: safeCategoryName,
+          slug: safeCategoryName.toLowerCase()
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove Vietnamese accents
             .replace(/\s+/g, '-')
             .replace(/[^a-z0-9-]/g, '')
