@@ -5,10 +5,10 @@ import { prisma } from '../../../lib/prisma'
 // GET - Fetch booked dates for a product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const { productId } = params
+    const { productId } = await params
 
     // Get all availability records for this product
     const availabilities = await prisma.availability.findMany({

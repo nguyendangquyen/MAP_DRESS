@@ -36,10 +36,10 @@ async function saveVideos(videos: VideoReview[]): Promise<void> {
 // DELETE - Remove video
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const videos = await getVideos()
     const videoIndex = videos.findIndex(v => v.id === id)
 
@@ -72,10 +72,10 @@ export async function DELETE(
 // PATCH - Update video (toggle featured)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const videos = await getVideos()
     const videoIndex = videos.findIndex(v => v.id === id)
