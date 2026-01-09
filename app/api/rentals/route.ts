@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/auth.config'
 
 // Mock rentals data - in production, this would come from Prisma/database
 const mockRentals = [
