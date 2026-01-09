@@ -40,14 +40,14 @@ export async function GET(
     const blockedDates: string[] = []
 
     // Add manually blocked dates from availability
-    availabilities.forEach(availability => {
+    availabilities.forEach((availability: { date: Date; isBlocked: boolean; rentalId: string | null }) => {
       if (availability.isBlocked || availability.rentalId) {
         blockedDates.push(availability.date.toISOString().split('T')[0])
       }
     })
 
     // Add all dates from active rentals
-    rentals.forEach(rental => {
+    rentals.forEach((rental: { startDate: Date; endDate: Date }) => {
       const start = new Date(rental.startDate)
       const end = new Date(rental.endDate)
       

@@ -41,7 +41,7 @@ export async function DELETE(
   try {
     const { id } = await params
     const videos = await getVideos()
-    const videoIndex = videos.findIndex(v => v.id === id)
+    const videoIndex = videos.findIndex((v: VideoReview) => v.id === id)
 
     if (videoIndex === -1) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })
@@ -78,7 +78,7 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
     const videos = await getVideos()
-    const videoIndex = videos.findIndex(v => v.id === id)
+    const videoIndex = videos.findIndex((v: VideoReview) => v.id === id)
 
     if (videoIndex === -1) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })

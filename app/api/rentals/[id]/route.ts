@@ -65,7 +65,7 @@ export async function PATCH(
     }
 
     // Find rental
-    const rentalIndex = mockRentals.findIndex(r => r.id === id)
+    const rentalIndex = mockRentals.findIndex((r: any) => r.id === id)
     if (rentalIndex === -1) {
       return NextResponse.json({ error: 'Rental not found' }, { status: 404 })
     }
