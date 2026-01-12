@@ -26,8 +26,10 @@ function formatCurrency(amount: number) {
 }
 
 export default function ProductCard({ product, badge, badgeColor = 'bg-brand' }: ProductCardProps) {
-  const displayCategory = typeof product.category === 'object' ? product.category.name : product.category
-  const displayPrice = product.dailyPrice || product.price || 0
+  const displayCategory = typeof product.category === 'object' && product.category !== null 
+    ? (product.category as any).name 
+    : (product.category || 'Chưa phân loại')
+  const displayPrice = Number(product.dailyPrice || product.price || 0)
   const displayRentals = product.rentalCount || product.rentals
   const displayImage = product.images?.[0]?.url || product.image
 

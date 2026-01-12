@@ -29,6 +29,7 @@ const priceRanges = [
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState('Tất cả')
   const [selectedPriceRange, setSelectedPriceRange] = useState(0)
   const [sortBy, setSortBy] = useState('newest')
@@ -40,11 +41,21 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
+      setIsLoading(true)
+      setError(null)
       const res = await fetch('/api/products')
       const data = await res.json()
-      setProducts(data)
+      
+      if (Array.isArray(data)) {
+        setProducts(data)
+      } else {
+        console.error('API did not return an array:', data)
+        setProducts([])
+        setError(data.error || 'Dữ liệu không hợp lệ')
+      }
     } catch (error) {
       console.error('Failed to fetch products:', error)
+      setError('Không thể kết nối với máy chủ')
     } finally {
       setIsLoading(false)
     }
@@ -176,6 +187,12 @@ export default function ProductsPage() {
           </div>
 
           <div className="flex-1 mt-6">
+            {error && (
+              <div className="mb-8 p-4 bg-red-50 text-red-500 rounded-2xl text-xs font-bold border border-red-100">
+                Lỗi: {error}. Vui lòng thử lại sau.
+              </div>
+            )}
+
             <div className="mb-8 flex items-center justify-between px-2">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
                 Hiển thị <span className="text-brand-dark">{filteredProducts.length}</span> thiết kế
