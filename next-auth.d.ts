@@ -1,11 +1,9 @@
-import { type DefaultSession } from "next-auth"
-
 declare module "next-auth" {
   interface Session {
     user: {
       id: string
       role: string
-    } & DefaultSession["user"]
+    } & import("next-auth").DefaultSession["user"]
   }
 
   interface User {
@@ -20,5 +18,3 @@ declare module "next-auth/jwt" {
     role?: string
   }
 }
-
-export {}

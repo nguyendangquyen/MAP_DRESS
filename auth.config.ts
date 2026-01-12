@@ -4,7 +4,7 @@ import { prisma } from './app/lib/prisma'
 import { verifyPassword } from './app/lib/auth'
 import { loginSchema } from './app/lib/validations'
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, signIn, signOut, auth } = (NextAuth as any)({
   providers: [
     Credentials({
       credentials: {
