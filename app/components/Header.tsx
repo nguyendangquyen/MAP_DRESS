@@ -222,7 +222,6 @@ export default function Header() {
           })}
         </nav>
         
-
         <div className="p-8 space-y-4">
           {!isLoggedIn && (
             <>
