@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import path from 'path'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'products')
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const fileExtension = file.name.split('.').pop()
-    const uniqueFilename = `${uuidv4()}.${fileExtension}`
+    const uniqueFilename = `${randomUUID()}.${fileExtension}`
     const filePath = path.join(UPLOAD_DIR, uniqueFilename)
 
     // Save file

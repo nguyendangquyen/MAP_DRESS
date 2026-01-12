@@ -18,7 +18,7 @@ import {
   EyeIcon,
   EyeSlashIcon
 } from '@heroicons/react/24/outline'
-import { getCurrentUserId, clearUserSession } from '../lib/auth-utils'
+import { getCurrentUserId, clearUserSession, saveUserSession, AuthUser } from '../lib/auth-utils'
 
 interface UserProfile {
   id: string
@@ -147,6 +147,16 @@ export default function ProfilePage() {
       
       const updatedUser = await response.json()
       setUser(updatedUser)
+      
+      // Sync session
+      saveUserSession({
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        image: updatedUser.image
+      } as AuthUser)
+
       setIsEditing(false)
       setSuccess('Cập nhật thông tin thành công!')
       setTimeout(() => setSuccess(''), 3000)
@@ -213,7 +223,17 @@ export default function ProfilePage() {
       if (!response.ok) throw new Error(data.error || 'Upload ảnh thất bại')
       
       if (user) {
-        setUser({ ...user, image: data.imageUrl })
+        const updatedProfile = { ...user, image: data.imageUrl }
+        setUser(updatedProfile)
+        
+        // Sync session
+        saveUserSession({
+          id: updatedProfile.id,
+          name: updatedProfile.name,
+          email: updatedProfile.email,
+          role: updatedProfile.role,
+          image: updatedProfile.image
+        } as AuthUser)
       }
       setSuccess('Cập nhật ảnh đại diện thành công!')
       setTimeout(() => setSuccess(''), 3000)
@@ -231,16 +251,16 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <ArrowPathIcon className="w-12 h-12 text-purple-600 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[#fffafa]">
+        <ArrowPathIcon className="w-12 h-12 text-brand-dark animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fffafa]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-12">
+      <div className="bg-gradient-to-r from-brand-dark to-brand text-white py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end">
             <div>
@@ -277,14 +297,14 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl shadow-md p-6 sticky top-8">
               <div className="text-center mb-6">
                 <div className="relative inline-block group">
-                  <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden border-4 border-white shadow-lg">
+                  <div className="w-40 h-40 bg-gradient-to-br from-brand-dark to-brand rounded-full flex items-center justify-center mx-auto mb-6 overflow-hidden border-4 border-white shadow-2xl transition-transform group-hover:scale-105 duration-500">
                     {user?.image ? (
                       <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
                       <UserIcon className="w-16 h-16 text-white" />
                     )}
                   </div>
-                  <label className="absolute bottom-4 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer shadow-md hover:bg-purple-700 transition-colors">
+                  <label className="absolute bottom-4 right-0 bg-brand-dark text-white p-2 rounded-full cursor-pointer shadow-md hover:bg-purple-700 transition-colors">
                     <CameraIcon className="w-5 h-5" />
                     <input type="file" className="hidden" onChange={handleAvatarUpload} accept="image/*" />
                   </label>
@@ -296,7 +316,7 @@ export default function ProfilePage() {
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800">{user?.name}</h2>
                 <p className="text-gray-500 font-medium">{user?.email}</p>
-                <div className="mt-2 inline-block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full uppercase">
+                <div className="mt-2 inline-block px-3 py-1 bg-brand-light/30 text-brand-dark text-xs font-bold rounded-full uppercase">
                   {user?.role === 'ADMIN' ? 'Hệ thống' : 'Khách hàng'}
                 </div>
               </div>
@@ -305,7 +325,7 @@ export default function ProfilePage() {
                 <button 
                   onClick={() => setActiveTab('info')}
                   className={`w-full text-left px-4 py-3 rounded-xl font-semibold flex items-center gap-3 transition-all ${
-                    activeTab === 'info' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                    activeTab === 'info' ? 'bg-brand-dark text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
                   <UserIcon className="w-5 h-5" />
@@ -314,7 +334,7 @@ export default function ProfilePage() {
                 <button 
                   onClick={() => setActiveTab('history')}
                   className={`w-full text-left px-4 py-3 rounded-xl font-semibold flex items-center gap-3 transition-all ${
-                    activeTab === 'history' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                    activeTab === 'history' ? 'bg-brand-dark text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
                   <ClockIcon className="w-5 h-5" />
@@ -323,7 +343,7 @@ export default function ProfilePage() {
                 <button 
                   onClick={() => setActiveTab('password')}
                   className={`w-full text-left px-4 py-3 rounded-xl font-semibold flex items-center gap-3 transition-all ${
-                    activeTab === 'password' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                    activeTab === 'password' ? 'bg-brand-dark text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
                   <KeyIcon className="w-5 h-5" />
@@ -356,7 +376,7 @@ export default function ProfilePage() {
                   {!isEditing ? (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 hover:shadow-lg transition-all"
+                      className="px-6 py-2 bg-brand-dark text-white rounded-xl font-bold hover:bg-purple-700 hover:shadow-lg transition-all"
                     >
                       Chỉnh sửa
                     </button>
@@ -383,7 +403,7 @@ export default function ProfilePage() {
                           onChange={handleProfileChange}
                           disabled={!isEditing}
                           placeholder="Nguyễn Văn A"
-                          className="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 font-medium"
+                          className="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 focus:ring-2 focus:ring-brand-dark focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 font-medium"
                         />
                       </div>
                     </div>
@@ -413,7 +433,7 @@ export default function ProfilePage() {
                           onChange={handleProfileChange}
                           disabled={!isEditing}
                           placeholder="Chưa cập nhật"
-                          className="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 font-medium"
+                          className="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 focus:ring-2 focus:ring-brand-dark focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 font-medium"
                         />
                       </div>
                     </div>
@@ -429,7 +449,7 @@ export default function ProfilePage() {
                           onChange={handleProfileChange}
                           disabled={!isEditing}
                           placeholder="Chưa cập nhật địa chỉ"
-                          className="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 font-medium"
+                          className="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 focus:ring-2 focus:ring-brand-dark focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 font-medium"
                         />
                       </div>
                     </div>
@@ -440,7 +460,7 @@ export default function ProfilePage() {
                       <button
                         type="submit"
                         disabled={isSaving}
-                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl hover:scale-[1.01] active:scale-100 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                        className="w-full bg-brand-dark text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl hover:scale-[1.01] active:scale-100 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                       >
                         {isSaving ? (
                           <ArrowPathIcon className="w-5 h-5 animate-spin" />
@@ -483,7 +503,7 @@ export default function ProfilePage() {
                         <div className="flex-1">
                           <div className="flex justify-between items-start flex-wrap gap-2">
                             <div>
-                              <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider bg-purple-100 px-2 py-0.5 rounded-md mb-2 inline-block">
+                              <span className="text-[10px] font-bold text-brand-dark uppercase tracking-wider bg-purple-100 px-2 py-0.5 rounded-md mb-2 inline-block">
                                 {rental.product.category.name}
                               </span>
                               <h4 className="font-bold text-xl text-gray-800 leading-tight">{rental.product.name}</h4>
@@ -517,11 +537,11 @@ export default function ProfilePage() {
                           <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
                             <div className="text-sm font-bold">
                               <span className="text-gray-400 mr-2">Tổng thanh toán:</span>
-                              <span className="text-xl text-purple-600">
+                              <span className="text-xl text-brand-dark">
                                 {formatCurrency(rental.totalPrice)}
                               </span>
                             </div>
-                            <button className="text-purple-600 hover:text-pink-600 font-bold text-sm flex items-center gap-1 transition-colors">
+                            <button className="text-brand-dark hover:text-pink-600 font-bold text-sm flex items-center gap-1 transition-colors">
                               Chi tiết đơn thuê <span className="text-lg">›</span>
                             </button>
                           </div>
@@ -539,7 +559,7 @@ export default function ProfilePage() {
                       <p className="text-gray-500 max-w-xs mx-auto mb-8">Hãy bắt đầu hành trình phong cách của bạn bằng cách khám phá bộ sưu tập của chúng tôi.</p>
                       <Link
                         href="/products"
-                        className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-xl transition-all"
+                        className="inline-flex items-center gap-2 px-8 py-3 bg-brand-dark text-white rounded-xl font-bold hover:shadow-xl transition-all"
                       >
                         Khám phá ngay
                       </Link>
@@ -566,7 +586,7 @@ export default function ProfilePage() {
                         required
                         value={passwordData.oldPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, oldPassword: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl pl-12 pr-12 py-3.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all font-medium"
+                        className="w-full border border-gray-200 rounded-xl pl-12 pr-12 py-3.5 focus:ring-2 focus:ring-brand-dark focus:border-transparent outline-none transition-all font-medium"
                       />
                       <button
                         type="button"
@@ -591,7 +611,7 @@ export default function ProfilePage() {
                         required
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl pl-12 pr-12 py-3.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all font-medium"
+                        className="w-full border border-gray-200 rounded-xl pl-12 pr-12 py-3.5 focus:ring-2 focus:ring-brand-dark focus:border-transparent outline-none transition-all font-medium"
                         placeholder="Tối thiểu 6 ký tự"
                       />
                       <button
@@ -617,7 +637,7 @@ export default function ProfilePage() {
                         required
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl pl-12 pr-12 py-3.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all font-medium"
+                        className="w-full border border-gray-200 rounded-xl pl-12 pr-12 py-3.5 focus:ring-2 focus:ring-brand-dark focus:border-transparent outline-none transition-all font-medium"
                       />
                       <button
                         type="button"

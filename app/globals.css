@@ -120,3 +120,34 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #e08a83;
 }
+
+/* Mobile Responsiveness Improvements (576px and below) */
+@media (max-width: 576px) {
+  /* Header Menu */
+  .text-brand-dark.text-3xl {
+    font-size: 1.5rem !important; /* Logo smaller */
+  }
+  
+  nav a.text-xs {
+    font-size: 10px !important; /* Nav links */
+  }
+
+  /* Product Cards */
+  .product-name {
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+
+  .product-price {
+    font-size: 14px !important;
+  }
+
+  /* Section Titles */
+  h2.text-5xl {
+    font-size: 2rem !important;
+  }
+
+  h2.text-6xl {
+    font-size: 2.5rem !important;
+  }
+}

@@ -5,21 +5,20 @@ import { ArrowRightIcon, SparklesIcon, ClockIcon, ShieldCheckIcon, PlayIcon, Sta
 import { useState, useEffect } from 'react'
 import AnimatedSection from './components/AnimatedSection'
 import ProductCard from './components/ProductCard'
+import { getCurrentUser } from './lib/auth-utils'
 
-// Mock data for demonstration
-const newProducts = [
-  { id: '1', name: 'Váy Dạ Hội Sang Trọng Đính Đá', category: 'Váy Dạ Hội', price: 500000, image: null },
-  { id: '2', name: 'Áo Dài Truyền Thống Thêu Hoa', category: 'Áo Dài', price: 300000, image: null },
-  { id: '3', name: 'Vest Nam Công Sở Cao Cấp', category: 'Vest', price: 400000, image: null },
-  { id: '4', name: 'Đầm Dự Tiệc Trễ Vai Quyến Rũ', category: 'Đầm', price: 350000, image: null },
-]
-
-const mostRented = [
-  { id: '5', name: 'Váy Cưới Đuôi Cá Phối Ren', category: 'Váy Cưới', price: 2000000, rentals: 145, image: null },
-  { id: '6', name: 'Suit Nam Lịch Lãm 3 Mảnh', category: 'Suit', price: 800000, rentals: 138, image: null },
-  { id: '7', name: 'Kimono Họa Tiết Hoa Đào', category: 'Trang Phục Truyền Thống', price: 1200000, rentals: 132, image: null },
-  { id: '8', name: 'Hanbok Cách Tân Hiện Đại', category: 'Trang Phục Truyền Thống', price: 900000, rentals: 128, image: null },
-]
+// Product interface matching API
+interface Product {
+  id: string
+  name: string
+  description?: string
+  dailyPrice: number
+  price?: number
+  isBestSeller: boolean
+  updatedAt: string
+  images: { url: string }[]
+  category?: { name: string }
+}
 
 interface VideoReview {
   id: string
@@ -36,10 +35,33 @@ export default function HomePage() {
   const [featuredVideos, setFeaturedVideos] = useState<VideoReview[]>([])
   const [loadingVideos, setLoadingVideos] = useState(true)
   const [selectedVideo, setSelectedVideo] = useState<VideoReview | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [newArrivals, setNewArrivals] = useState<any[]>([])
+  const [bestSellers, setBestSellers] = useState<any[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(true)
 
   useEffect(() => {
     fetchFeaturedVideos()
+    fetchProducts()
+    setIsLoggedIn(!!getCurrentUser())
   }, [])
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/products')
+      if (res.ok) {
+        const data = await res.json()
+        // New arrivals: latest 4 updated products
+        setNewArrivals(data.slice(0, 4))
+        // Best sellers: products with isBestSeller flag
+        setBestSellers(data.filter((p: any) => p.isBestSeller).slice(0, 4))
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error)
+    } finally {
+      setLoadingProducts(false)
+    }
+  }
 
   const fetchFeaturedVideos = async () => {
     try {
@@ -59,7 +81,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#fffafa]">
       {/* Dynamic Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 bg-brand-light/20">
           {/* Animated Blobs - Soft Pink Palette */}
@@ -77,16 +99,16 @@ export default function HomePage() {
             </AnimatedSection>
             
             <AnimatedSection animation="fade-in-up" delay={200}>
-                <h1 className="text-5xl md:text-9xl font-black mb-6 tracking-tighter leading-[0.9] text-gray-900">
+                <h1 className="text-4xl md:text-8xl font-black mb-4 tracking-tighter leading-[0.9] text-gray-900">
                 MAP <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-dark via-brand to-brand-dark animate-gradient-text">DRESS</span>
                 </h1>
-                <p className="text-lg md:text-3xl font-bold text-brand-dark/80 tracking-widest uppercase mt-2">
+                <p className="text-sm md:text-xl font-bold text-brand-dark/80 tracking-widest uppercase mt-1">
                   Fashion Rental Studio
                 </p>
             </AnimatedSection>
 
             <AnimatedSection animation="fade-in-up" delay={400}>
-                <p className="text-base md:text-xl mb-12 text-gray-600 max-w-2xl mx-auto font-medium leading-relaxed px-4">
+                <p className="text-sm md:text-lg mb-8 text-gray-600 max-w-2xl mx-auto font-medium leading-relaxed px-4">
                 Khám phá tủ đồ trong mơ với những thiết kế váy đầm cao cấp, giúp bạn tỏa sáng trong mọi khoảnh khắc quan trọng.
                 </p>
             </AnimatedSection>
@@ -100,12 +122,14 @@ export default function HomePage() {
                   Bắt Đầu Thuê
                   <ArrowRightIcon className="w-5 h-5 transform group-hover:translate-x-2 transition-transform" />
                 </Link>
-                <Link
-                  href="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-white text-brand-dark px-10 py-5 rounded-full font-black text-lg transition-all border-2 border-brand/30 hover:border-brand-dark shadow-sm"
-                >
-                  Tham Gia Ngay
-                </Link>
+                {!isLoggedIn && (
+                  <Link
+                    href="/register"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-white text-brand-dark px-10 py-5 rounded-full font-black text-lg transition-all border-2 border-brand/30 hover:border-brand-dark shadow-sm"
+                  >
+                    Tham Gia Ngay
+                  </Link>
+                )}
               </div>
             </AnimatedSection>
           </div>
@@ -176,7 +200,9 @@ export default function HomePage() {
           </AnimatedSection>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-10">
-            {newProducts.map((product, idx) => (
+            {loadingProducts ? (
+              [1, 2, 3, 4].map(i => <div key={i} className="aspect-[3/4] bg-gray-100 animate-pulse rounded-[2.5rem]" />)
+            ) : newArrivals.map((product, idx) => (
               <AnimatedSection key={product.id} animation="fade-in-up" delay={idx * 100}>
                 <ProductCard product={product} badge="New" />
               </AnimatedSection>
@@ -253,11 +279,19 @@ export default function HomePage() {
           </AnimatedSection>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-10">
-            {mostRented.map((product, idx) => (
-              <AnimatedSection key={product.id} animation="fade-in-up" delay={idx * 100}>
-                <ProductCard product={product} badge="Best Seller" badgeColor="bg-brand-dark" />
-              </AnimatedSection>
-            ))}
+            {loadingProducts ? (
+              [1, 2, 3, 4].map(i => <div key={i} className="aspect-[3/4] bg-gray-100 animate-pulse rounded-[2.5rem]" />)
+            ) : bestSellers.length > 0 ? (
+              bestSellers.map((product, idx) => (
+                <AnimatedSection key={product.id} animation="fade-in-up" delay={idx * 100}>
+                  <ProductCard product={product} badge="Best Seller" badgeColor="bg-brand-dark" />
+                </AnimatedSection>
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-gray-400 font-black uppercase tracking-widest text-xs">
+                Đang cập nhật danh sách...
+              </div>
+            )}
           </div>
         </div>
       </section>

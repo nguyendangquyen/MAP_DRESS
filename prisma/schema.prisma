@@ -62,6 +62,7 @@ model Product {
   status      ProductStatus @default(AVAILABLE)
   viewCount   Int      @default(0)
   rentalCount Int      @default(0)
+  isBestSeller Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

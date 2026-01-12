@@ -67,7 +67,7 @@ export default function Header() {
   }, [isSidebarOpen])
 
   return (
-    <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Menu Toggle - Mobile Only */}
@@ -82,7 +82,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 md:relative md:left-0 md:translate-x-0 absolute left-1/2 -translate-x-1/2">
-            <span className="text-2xl md:text-3xl font-black tracking-tighter text-brand-dark">
+            <span className="text-xl md:text-2xl font-black tracking-tighter text-brand-dark">
               MAP DRESS
             </span>
           </Link>
@@ -95,8 +95,8 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`text-xs font-black uppercase tracking-widest transition-all ${
-                    isActive ? 'text-brand-dark' : 'text-gray-400 hover:text-brand-dark'
+                  className={`text-[12px] font-bold uppercase tracking-widest transition-all ${
+                    isActive ? 'text-brand-dark' : 'text-gray-500 hover:text-brand-dark'
                   }`}
                 >
                   {item.name}
@@ -216,7 +216,7 @@ export default function Header() {
                 }`}
               >
                 <Icon className="w-6 h-6" />
-                <span className="text-lg uppercase tracking-widest">{item.name}</span>
+                <span className="text-[12px] uppercase tracking-widest">{item.name}</span>
               </Link>
             )
           })}

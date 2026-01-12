@@ -12,7 +12,7 @@ export async function GET() {
         colors: true
       },
       orderBy: {
-        createdAt: 'desc'
+        updatedAt: 'desc'
       }
     })
     return NextResponse.json(products)
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('DEBUG: Creating product with body:', JSON.stringify(body, null, 2))
     
-    const { name, description, price, stock, categoryName, category, images, sizes, colors } = body
+    const { name, description, price, stock, categoryName, category, images, sizes, colors, isBestSeller } = body
     
     // Normalize category name (handling both 'categoryName' and 'category' for safety)
     const finalCategoryName = categoryName || category
@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
         },
         colors: {
           create: (colors || '').toString().split(',').map((c: string) => ({ value: c.trim() })).filter((c:any) => c.value)
-        }
+        },
+        isBestSeller: Boolean(isBestSeller)
       },
       include: {
         images: true,
@@ -96,6 +97,100 @@ export async function POST(request: NextRequest) {
       error: 'Failed to create product', 
       details: errorMessage,
       code: errorCode
+    }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, name, description, price, stock, categoryName, images, colors, isBestSeller, status } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
+    }
+
+    // Find or create category if name changed
+    let categoryId = undefined
+    if (categoryName) {
+      let categoryRecord = await prisma.category.findFirst({
+        where: { name: categoryName }
+      })
+
+      if (!categoryRecord) {
+        categoryRecord = await prisma.category.create({
+          data: {
+            name: categoryName,
+            slug: categoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+          }
+        })
+      }
+      categoryId = categoryRecord.id
+    }
+
+    console.log('DEBUG: PATCH request body:', body)
+
+    // Check if product exists
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+      include: { category: true }
+    })
+
+    if (!existingProduct) {
+      console.error('CRITICAL: Product to update not found:', id)
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    }
+
+    // Update product
+    const patchData: any = {}
+    if (name) patchData.name = name
+    if (description !== undefined) patchData.description = description
+    if (price !== undefined && price !== '') patchData.dailyPrice = parseFloat(price.toString())
+    if (stock !== undefined && stock !== '') patchData.stock = parseInt(stock.toString())
+    if (isBestSeller !== undefined) patchData.isBestSeller = !!isBestSeller
+    if (status) patchData.status = (status === 'REPAIRING' ? 'MAINTENANCE' : status) as any
+    if (categoryId) patchData.categoryId = categoryId
+
+    // Filter out NaN values
+    if (patchData.dailyPrice !== undefined && isNaN(patchData.dailyPrice)) delete patchData.dailyPrice
+    if (patchData.stock !== undefined && isNaN(patchData.stock)) delete patchData.stock
+
+    console.log('DEBUG: Final Patch Data:', JSON.stringify(patchData, null, 2))
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        ...patchData,
+        ...(images && {
+          images: {
+            deleteMany: {},
+            create: images.map((url: string) => ({ url }))
+          }
+        }),
+        ...(colors !== undefined && {
+          colors: {
+            deleteMany: {},
+            create: (colors || '').toString().split(',')
+              .map((c: string) => ({ value: c.trim() }))
+              .filter((c:any) => c.value)
+          }
+        })
+      },
+      include: {
+        images: true,
+        category: true,
+        colors: true
+      }
+    })
+
+    console.log('DEBUG: Product updated successfully:', product.id)
+    return NextResponse.json(product)
+  } catch (error: any) {
+    console.error('CRITICAL: Error in PATCH /api/products:', error)
+    return NextResponse.json({ 
+      error: 'Failed to update product', 
+      details: error.message,
+      code: error.code || 'UNKNOWN'
     }, { status: 500 })
   }
 }

@@ -26,6 +26,7 @@ export default function ProductsManagementPage() {
     stock: '',
     colors: '',
     images: [] as string[],
+    isBestSeller: false,
   })
   const [isUploading, setIsUploading] = useState(false)
 
@@ -82,19 +83,28 @@ export default function ProductsManagementPage() {
     
     try {
       const url = '/api/products'
-      const method = editingId ? 'PATCH' : 'POST' // Note: Patch not yet in API but preparing
-      
       const res = await fetch(url, {
-        method: 'POST', // For simplicity right now only POST
+        method: editingId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(editingId ? { ...formData, id: editingId } : formData),
       })
 
       if (res.ok) {
         fetchProducts()
         setIsAdding(false)
         setEditingId(null)
-        setFormData({ name: '', categoryName: categories[0], description: '', price: '', stock: '', colors: '', images: [] })
+        setIsAdding(false)
+        setEditingId(null)
+        setFormData({ 
+          name: '', 
+          categoryName: categories[0], 
+          description: '', 
+          price: '', 
+          stock: '', 
+          colors: '', 
+          images: [], 
+          isBestSeller: false 
+        })
       } else {
         const errorData = await res.json()
         alert(`Có lỗi xảy ra: ${errorData.details || errorData.error || 'Lỗi không xác định'}`)
@@ -115,6 +125,7 @@ export default function ProductsManagementPage() {
       stock: product.stock.toString(),
       colors: product.colors?.map((c:any) => c.value).join(', ') || '',
       images: product.images?.map((img:any) => img.url) || [],
+      isBestSeller: product.isBestSeller || false,
     })
     setIsAdding(true)
   }
@@ -125,8 +136,21 @@ export default function ProductsManagementPage() {
     }
   }
 
-  const handleStatusChange = (id: string, newStatus: string) => {
-    setProducts(products.map(p => p.id === id ? { ...p, status: newStatus } : p))
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const res = await fetch('/api/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus }),
+      })
+      if (res.ok) {
+        setProducts(products.map(p => p.id === id ? { ...p, status: newStatus } : p))
+      } else {
+        alert('Cập nhật trạng thái thất bại')
+      }
+    } catch (error) {
+      console.error('Status update failed:', error)
+    }
   }
 
   return (
@@ -207,14 +231,15 @@ export default function ProductsManagementPage() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold mb-2">Màu sắc (cách nhau bởi dấu phẩy)</label>
-              <input
-                type="text"
-                value={formData.colors}
-                onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Đỏ, Đen, Trắng"
-              />
+              <label className="flex items-center gap-2 cursor-pointer p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-gray-100/50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={formData.isBestSeller}
+                  onChange={(e) => setFormData({ ...formData, isBestSeller: e.target.checked })}
+                  className="w-5 h-5 rounded border-gray-300 text-brand focus:ring-brand"
+                />
+                <span className="text-sm font-bold uppercase tracking-widest text-brand-dark">Sản phẩm Best Seller (Hiện ở trang chủ)</span>
+              </label>
             </div>
 
             <div className="md:col-span-2">
@@ -288,6 +313,7 @@ export default function ProductsManagementPage() {
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Danh mục</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Giá/ngày</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Số lượng</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Best Seller</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Trạng thái</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Thao tác</th>
             </tr>
@@ -323,6 +349,13 @@ export default function ProductsManagementPage() {
                 <td className="px-6 py-4 text-purple-600 font-semibold">{formatCurrency(product.dailyPrice)}</td>
                 <td className="px-6 py-4">{product.stock}</td>
                 <td className="px-6 py-4">
+                  {product.isBestSeller ? (
+                    <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-[10px] font-black uppercase tracking-tighter">Yes</span>
+                  ) : (
+                    <span className="text-gray-300 text-[10px] font-bold uppercase tracking-tighter">No</span>
+                  )}
+                </td>
+                <td className="px-6 py-4">
                   <select
                     value={product.status}
                     onChange={(e) => handleStatusChange(product.id, e.target.value)}
@@ -334,7 +367,8 @@ export default function ProductsManagementPage() {
                   >
                     <option value="AVAILABLE">Có sẵn</option>
                     <option value="RENTED">Đang thuê</option>
-                    <option value="REPAIRING">Đang sửa</option>
+                    <option value="MAINTENANCE">Đang bảo trì (Sửa)</option>
+                    <option value="UNAVAILABLE">Ngưng KD</option>
                   </select>
                 </td>
                 <td className="px-6 py-4">

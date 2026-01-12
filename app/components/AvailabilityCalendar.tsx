@@ -11,7 +11,7 @@ export default function AvailabilityCalendar({ productId = '1', onDateSelect }: 
   const today = new Date()
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
-  const [selectedDates, setSelectedDates] = useState<number[]>([])
+  const [selectedDates, setSelectedDates] = useState<string[]>([])
   const [blockedDates, setBlockedDates] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -79,13 +79,18 @@ export default function AvailabilityCalendar({ productId = '1', onDateSelect }: 
   const handleDateClick = (day: number, month: number, year: number) => {
     if (isDateBlocked(day, month, year) || isPastDate(day, month, year)) return
     
-    const dateKey = `${year}-${month}-${day}`
-    const newSelectedDates = selectedDates.includes(day)
-      ? selectedDates.filter(d => d !== day)
-      : [...selectedDates, day].sort((a, b) => a - b)
+    const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    const newSelectedDates = selectedDates.includes(dateKey)
+      ? selectedDates.filter(d => d !== dateKey)
+      : [...selectedDates, dateKey].sort()
     
     setSelectedDates(newSelectedDates)
-    onDateSelect?.(newSelectedDates)
+    
+    // Also provide just the days to the parent if needed, though full dates might be better
+    // For now, let's keep the prop interface if it was expecting numbers, 
+    // but converting strings to numbers for "days" might be ambiguous now.
+    // Let's see how onDateSelect is used.
+    onDateSelect?.(newSelectedDates.map(d => parseInt(d.split('-')[2])))
   }
 
   const renderMonth = (days: (number | null)[], month: number, year: number) => (
@@ -104,8 +109,9 @@ export default function AvailabilityCalendar({ productId = '1', onDateSelect }: 
           
           const isBooked = isDateBlocked(day, month, year)
           const isPast = isPastDate(day, month, year)
-          const isSelected = selectedDates.includes(day)
-          const isToday = day === currentDay && month === currentMonthNum && year === currentYearNum
+          const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const isSelected = selectedDates.includes(dateKey)
+          const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
           
           return (
             <button
