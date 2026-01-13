@@ -105,7 +105,7 @@ export default function ProductDetailPage() {
           
           {/* LEFT: Visual Assets (5 columns instead of 7) */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="relative aspect-[3/4] max-w-md mx-auto bg-gray-50 rounded-[2.5rem] overflow-hidden shadow-2xl group">
+            <div className="relative aspect-[3/4] w-full lg:max-w-md mx-auto bg-gray-50 rounded-[2.5rem] overflow-hidden shadow-2xl group">
               {product.images?.length > 0 ? (
                 <img 
                   src={product.images[currentImageIndex].url} 
@@ -153,7 +153,7 @@ export default function ProductDetailPage() {
                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-dark">{product.category?.name || 'BST Mới'}</span>
                 </div>
                 
-                <h1 className="text-5xl xl:text-6xl font-black tracking-tighter text-brand-dark leading-[0.9] mb-6 uppercase">
+                <h1 className="text-[18px] lg:text-5xl xl:text-6xl font-black tracking-tighter text-brand-dark leading-snug lg:leading-[0.9] mb-6 uppercase">
                     {product.name}
                 </h1>
                 
@@ -167,7 +167,7 @@ export default function ProductDetailPage() {
                 <div className="mb-8">
                     <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Giá thuê trong ngày</span>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-black text-brand-dark">{formatCurrency(product.dailyPrice)}</span>
+                        <span className="text-2xl lg:text-3xl font-black text-brand-dark">{formatCurrency(product.dailyPrice)}</span>
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ ngày</span>
                     </div>
                 </div>
@@ -187,16 +187,25 @@ export default function ProductDetailPage() {
                     </div>
                 )}
 
-                {/* Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <button onClick={handleBookNow} className="flex-1 h-16 bg-brand-dark text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] shadow-2xl hover:bg-black transition-all transform hover:-translate-y-1">
+            {/* Buttons */}
+                <div className="flex gap-4">
+                    <button onClick={handleBookNow} className="flex-1 h-12 bg-brand-dark text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-black transition-all transform hover:-translate-y-1">
                         Đặt thuê ngay
                     </button>
-                    <button onClick={() => setShowCalendar(!showCalendar)} className="h-16 px-8 border-2 border-brand-dark/10 text-brand-dark rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] hover:bg-brand-dark hover:text-white transition-all flex items-center justify-center gap-2">
+                    <button onClick={() => setShowCalendar(!showCalendar)} className="flex-1 h-12 border-2 border-brand-dark/10 text-brand-dark rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-brand-dark hover:text-white transition-all flex items-center justify-center gap-2">
                         {showCalendar ? 'Đóng lịch' : <><CalendarIcon className="w-4 h-4" /> Lịch trống</>}
                     </button>
                 </div>
             </div>
+
+            {/* Calendar Expandable */}
+            {showCalendar && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500 mb-8">
+                    <div className="p-6 bg-white border border-gray-100 rounded-[2rem] shadow-lg">
+                        <AvailabilityCalendar key={refreshKey} productId={product.id} onDateSelect={handleDateSelect} />
+                    </div>
+                </div>
+            )}
 
             {/* Quick Benefits */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-6 px-4">
@@ -229,26 +238,17 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
             </div>
-
-            {/* Calendar Expandable */}
-            {showCalendar && (
-                <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-xl">
-                        <AvailabilityCalendar key={refreshKey} productId={product.id} onDateSelect={handleDateSelect} />
-                    </div>
-                </div>
-            )}
           </div>
         </div>
 
         {/* FEEDBACK SECTION */}
         <div className="mt-32 pt-20 border-t border-gray-100">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8 px-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 px-4">
                 <div>
                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-brand block mb-4">Social Proof</span>
-                    <h2 className="text-4xl font-black tracking-tighter uppercase text-brand-dark">Đánh giá thực tế</h2>
+                    <h2 className="text-[18px] lg:text-5xl xl:text-6xl font-black tracking-tighter text-brand-dark leading-snug lg:leading-[0.9] uppercase">Đánh giá thực tế</h2>
                 </div>
-                <button onClick={() => setShowReviewForm(!showReviewForm)} className="text-[10px] font-black uppercase tracking-widest text-brand-dark py-3 px-8 rounded-full border-2 border-brand-dark/5 hover:bg-brand-dark hover:text-white transition-all">
+                <button onClick={() => setShowReviewForm(!showReviewForm)} className="text-[10px] font-black uppercase tracking-widest text-white bg-brand-dark py-3 px-8 rounded-full border-2 border-brand-dark hover:bg-white hover:text-brand-dark transition-all whitespace-nowrap shadow-lg">
                     {showReviewForm ? 'Thoát chế độ viết' : 'Gửi lời khen sản phẩm'}
                 </button>
             </div>
@@ -259,9 +259,9 @@ export default function ProductDetailPage() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="flex overflow-x-auto gap-8 pb-8 -mx-4 px-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                 {[1, 2, 3].map((_, i) => (
-                    <div key={i} className="bg-white p-10 rounded-[3rem] border border-gray-100 hover:border-brand/30 transition-all hover:shadow-xl group">
+                    <div key={i} className="min-w-[300px] md:min-w-[400px] bg-white p-10 rounded-[3rem] border border-gray-100 hover:border-brand/30 transition-all hover:shadow-xl group snap-start">
                         <div className="flex gap-1 mb-6">
                             {[1, 2, 3, 4, 5].map(s => <svg key={s} className="w-3 h-3 text-brand fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" /></svg>)}
                         </div>
