@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 // Mock data - in production, update Prisma database
 const mockRentals = [
@@ -64,20 +65,53 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
     }
 
-    // Find rental
-    const rentalIndex = mockRentals.findIndex((r: any) => r.id === id)
-    if (rentalIndex === -1) {
-      return NextResponse.json({ error: 'Rental not found' }, { status: 404 })
+    // Update rental status in database
+    const updatedRental = await prisma.rental.update({
+      where: { id },
+      data: { status },
+      include: {
+        user: true,
+        product: true
+      }
+    })
+    
+    // Map to frontend structure - matching GET response
+    const formattedRental = {
+      id: updatedRental.id,
+      userId: updatedRental.userId,
+      productId: updatedRental.productId,
+      customer: updatedRental.user?.name || 'Guest',
+      product: updatedRental.product?.name || 'Deleted Product',
+      productImage: updatedRental.product?.images?.[0]?.url || '',
+      startDate: updatedRental.startDate.toISOString().split('T')[0],
+      endDate: updatedRental.endDate.toISOString().split('T')[0],
+      status: updatedRental.status,
+      totalPrice: updatedRental.totalPrice
     }
 
-    // Update rental
-    mockRentals[rentalIndex].status = status
-
-    // In production: await prisma.rental.update({ where: { id }, data: { status } })
-    
-    return NextResponse.json(mockRentals[rentalIndex])
+    return NextResponse.json(formattedRental)
   } catch (error) {
     console.error('Error updating rental:', error)
     return NextResponse.json({ error: 'Failed to update rental' }, { status: 500 })
+  }
+}
+
+// DELETE - Delete a rental
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+
+    // Delete rental from database
+    await prisma.rental.delete({
+      where: { id }
+    })
+    
+    return NextResponse.json({ message: 'Rental deleted successfully' })
+  } catch (error) {
+    console.error('Error deleting rental:', error)
+    return NextResponse.json({ error: 'Failed to delete rental' }, { status: 500 })
   }
 }

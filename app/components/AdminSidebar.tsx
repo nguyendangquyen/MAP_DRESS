@@ -14,7 +14,8 @@ import {
   Cog6ToothIcon,
   StarIcon,
   PhotoIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline'
 
 const menuItems = [
@@ -24,6 +25,7 @@ const menuItems = [
   { name: 'Quản lý danh mục', href: '/dashboard/categories', icon: FolderIcon },
   { name: 'Quản lý banner', href: '/dashboard/banners', icon: PhotoIcon },
   { name: 'Quản lý đơn thuê', href: '/dashboard/rentals', icon: CalendarIcon },
+  { name: 'Lịch sử đơn hàng', href: '/dashboard/history', icon: ClockIcon },
   { name: 'Thanh toán', href: '/dashboard/payments', icon: CreditCardIcon },
   { name: 'Chat hỗ trợ', href: '/dashboard/chat', icon: ChatBubbleLeftRightIcon },
   { name: 'Quản lý đánh giá', href: '/dashboard/reviews', icon: StarIcon },

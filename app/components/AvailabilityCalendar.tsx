@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 
 interface Props {
   productId?: string
-  onDateSelect?: (dates: number[]) => void
+  onDateSelect?: (dates: string[]) => void
 }
 
 export default function AvailabilityCalendar({ productId = '1', onDateSelect }: Props) {
@@ -27,7 +27,7 @@ export default function AvailabilityCalendar({ productId = '1', onDateSelect }: 
       const response = await fetch(`/api/availability/${productId}`)
       if (response.ok) {
         const data = await response.json()
- setBlockedDates(data.blockedDates || [])
+        setBlockedDates(data.blockedDates || [])
       }
     } catch (error) {
       console.error('Error fetching blocked dates:', error)
@@ -85,12 +85,7 @@ export default function AvailabilityCalendar({ productId = '1', onDateSelect }: 
       : [...selectedDates, dateKey].sort()
     
     setSelectedDates(newSelectedDates)
-    
-    // Also provide just the days to the parent if needed, though full dates might be better
-    // For now, let's keep the prop interface if it was expecting numbers, 
-    // but converting strings to numbers for "days" might be ambiguous now.
-    // Let's see how onDateSelect is used.
-    onDateSelect?.(newSelectedDates.map(d => parseInt(d.split('-')[2])))
+    onDateSelect?.(newSelectedDates)
   }
 
   const renderMonth = (days: (number | null)[], month: number, year: number) => (

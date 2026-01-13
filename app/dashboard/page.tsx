@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { 
   UsersIcon, 
   ShoppingBagIcon, 
@@ -10,25 +11,19 @@ import {
 } from '@heroicons/react/24/outline'
 import AdminSidebar from '../components/AdminSidebar'
 
-// Mock data - replace with real database calls
-const mockData = {
-  totalUsers: 248,
-  totalProducts: 86,
-  totalRentals: 125,
-  totalRevenue: 125000000,
-  recentRentals: [
-    { id: '1', customer: 'Nguyễn Văn A', product: 'Váy Dạ Hội', status: 'Đang thuê', amount: 1500000 },
-    { id: '2', customer: 'Trần Thị B', product: 'Suit Nam', status: 'Chờ xác nhận', amount: 2400000 },
-    { id: '3', customer: 'Lê Văn C', product: 'Áo Dài', status: 'Hoàn thành', amount: 900000 },
-  ]
+interface DashboardData {
+  totalUsers: number
+  totalProducts: number
+  totalRentals: number
+  totalRevenue: number
+  recentRentals: {
+    id: string
+    customer: string
+    product: string
+    status: string
+    amount: number
+  }[]
 }
-
-const stats = [
-  { name: 'Tổng người dùng', value: mockData.totalUsers.toString(), icon: UsersIcon, color: 'bg-blue-500', change: '+12%' },
-  { name: 'Sản phẩm', value: mockData.totalProducts.toString(), icon: ShoppingBagIcon, color: 'bg-purple-500', change: '+5%' },
-  { name: 'Đơn thuê', value: mockData.totalRentals.toString(), icon: CalendarIcon, color: 'bg-pink-500', change: '+23%' },
-  { name: 'Doanh thu', value: `${(mockData.totalRevenue / 1000000).toFixed(0)}M`, icon: CreditCardIcon, color: 'bg-green-500', change: '+18%' },
-]
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('vi-VN', {
@@ -38,6 +33,44 @@ function formatCurrency(amount: number) {
 }
 
 export default function DashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/admin/stats')
+        if (response.ok) {
+          const result = await response.json()
+          setData(result)
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <AdminSidebar />
+        <main className="flex-1 ml-64 p-8 flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        </main>
+      </div>
+    )
+  }
+
+  const stats = [
+    { name: 'Tổng người dùng', value: data?.totalUsers.toString() || '0', icon: UsersIcon, color: 'bg-blue-500' },
+    { name: 'Sản phẩm', value: data?.totalProducts.toString() || '0', icon: ShoppingBagIcon, color: 'bg-purple-500' },
+    { name: 'Đơn thuê', value: data?.totalRentals.toString() || '0', icon: CalendarIcon, color: 'bg-pink-500' },
+    { name: 'Doanh thu', value: `${((data?.totalRevenue || 0) / 1000000).toFixed(1)}M`, icon: CreditCardIcon, color: 'bg-green-500' },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <AdminSidebar />
@@ -57,7 +90,6 @@ export default function DashboardPage() {
                     <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
                       <Icon className="w-6 h-6 text-white" />
                     </div>
-                    <span className="text-green-600 text-sm font-semibold">{stat.change}</span>
                   </div>
                   <p className="text-gray-600 mb-1">{stat.name}</p>
                   <span className="text-3xl font-bold">{stat.value}</span>
@@ -72,18 +104,22 @@ export default function DashboardPage() {
             <div className="bg-white rounded-2xl shadow-md p-6">
               <h3 className="text-xl font-bold mb-4">Đơn Thuê Gần Đây</h3>
               <div className="space-y-3">
-                {mockData.recentRentals.map((rental) => (
-                  <div key={rental.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-semibold">{rental.customer}</p>
-                      <p className="text-sm text-gray-600">{rental.product}</p>
+                {data?.recentRentals.length === 0 ? (
+                  <p className="text-center text-gray-500 py-4">Chưa có đơn thuê nào</p>
+                ) : (
+                  data?.recentRentals.map((rental) => (
+                    <div key={rental.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-semibold">{rental.customer}</p>
+                        <p className="text-sm text-gray-600">{rental.product}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-purple-600">{formatCurrency(rental.amount)}</p>
+                        <p className="text-xs text-gray-500">{rental.status}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-purple-600">{formatCurrency(rental.amount)}</p>
-                      <p className="text-xs text-gray-500">{rental.status}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
@@ -129,19 +165,19 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
               <div>
                 <p className="text-white/80 text-sm">Người dùng</p>
-                <p className="text-2xl font-bold">{mockData.totalUsers}</p>
+                <p className="text-2xl font-bold">{data?.totalUsers || 0}</p>
               </div>
               <div>
                 <p className="text-white/80 text-sm">Sản phẩm</p>
-                <p className="text-2xl font-bold">{mockData.totalProducts}</p>
+                <p className="text-2xl font-bold">{data?.totalProducts || 0}</p>
               </div>
               <div>
                 <p className="text-white/80 text-sm">Đơn thuê</p>
-                <p className="text-2xl font-bold">{mockData.totalRentals}</p>
+                <p className="text-2xl font-bold">{data?.totalRentals || 0}</p>
               </div>
               <div>
                 <p className="text-white/80 text-sm">Doanh thu</p>
-                <p className="text-2xl font-bold">{(mockData.totalRevenue / 1000000).toFixed(0)}M</p>
+                <p className="text-2xl font-bold">{((data?.totalRevenue || 0) / 1000000).toFixed(1)}M</p>
               </div>
             </div>
           </div>

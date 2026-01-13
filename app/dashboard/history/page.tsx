@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AdminSidebar from '../../components/AdminSidebar'
-import { PencilIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { TrashIcon } from '@heroicons/react/24/outline'
 
 interface Rental {
   id: string
@@ -10,17 +10,14 @@ interface Rental {
   productId: string
   customer: string
   product: string
+  productImage: string
   startDate: string
   endDate: string
   status: string
   totalPrice: number
-  productImage: string
 }
 
 const statusConfig = {
-  PENDING: { label: 'Đặt trước', color: 'blue' },
-  CONFIRMED: { label: 'Đã xác nhận', color: 'green' },
-  ACTIVE: { label: 'Đang thuê', color: 'orange' },
   RETURNED: { label: 'Đã trả hàng', color: 'gray' },
   CANCELLED: { label: 'Đã hủy', color: 'red' },
 }
@@ -29,7 +26,7 @@ function formatCurrency(amount: number) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
 }
 
-export default function RentalsManagementPage() {
+export default function RentalHistoryPage() {
   const [rentals, setRentals] = useState<Rental[]>([])
   const [filter, setFilter] = useState<string>('all')
   const [loading, setLoading] = useState(true)
@@ -43,7 +40,11 @@ export default function RentalsManagementPage() {
       const response = await fetch('/api/rentals')
       if (response.ok) {
         const data = await response.json()
-        setRentals(data)
+        // Filter only closed rentals
+        const closedRentals = data.filter((r: Rental) => 
+          ['RETURNED', 'CANCELLED'].includes(r.status)
+        )
+        setRentals(closedRentals)
       }
     } catch (error) {
       console.error('Error fetching rentals:', error)
@@ -52,23 +53,22 @@ export default function RentalsManagementPage() {
     }
   }
 
-  const updateStatus = async (id: string, newStatus: string) => {
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa đơn hàng này? Hành động này không thể hoàn tác.')) return
+
     try {
       const response = await fetch(`/api/rentals/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        method: 'DELETE',
       })
 
       if (response.ok) {
-        const updatedRental = await response.json()
-        setRentals(rentals.map(r => r.id === id ? updatedRental : r))
-        alert('Cập nhật trạng thái thành công!')
+        setRentals(rentals.filter(r => r.id !== id))
+        alert('Xóa đơn hàng thành công!')
       } else {
         alert('Có lỗi xảy ra!')
       }
     } catch (error) {
-      console.error('Error updating status:', error)
+      console.error('Error deleting rental:', error)
       alert('Có lỗi xảy ra!')
     }
   }
@@ -77,44 +77,21 @@ export default function RentalsManagementPage() {
     ? rentals 
     : rentals.filter(r => r.status === filter)
 
-  const stats = {
-    pending: rentals.filter(r => r.status === 'PENDING').length,
-    active: rentals.filter(r => r.status === 'ACTIVE').length,
-    returned: rentals.filter(r => r.status === 'RETURNED').length,
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <AdminSidebar />
       <main className="flex-1 ml-64 p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Quản Lý Đơn Thuê</h1>
-          <p className="text-gray-600">Theo dõi và quản lý trạng thái đơn hàng</p>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <p className="text-gray-600 mb-1">Đặt trước</p>
-            <p className="text-3xl font-bold text-blue-600">{stats.pending}</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <p className="text-gray-600 mb-1">Đang thuê</p>
-            <p className="text-3xl font-bold text-orange-600">{stats.active}</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <p className="text-gray-600 mb-1">Đã trả hàng</p>
-            <p className="text-3xl font-bold text-gray-600">{stats.returned}</p>
-          </div>
+          <h1 className="text-3xl font-bold mb-2">Lịch Sử Đơn Hàng</h1>
+          <p className="text-gray-600">Quản lý các đơn thuê đã hoàn tất hoặc bị hủy</p>
         </div>
 
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-6">
           {[
             { key: 'all', label: 'Tất cả' },
-            { key: 'PENDING', label: 'Đặt trước' },
-            { key: 'CONFIRMED', label: 'Đã xác nhận' },
-            { key: 'ACTIVE', label: 'Đang thuê' },
+            { key: 'RETURNED', label: 'Đã trả hàng' },
+            { key: 'CANCELLED', label: 'Đã hủy' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -176,44 +153,18 @@ export default function RentalsManagementPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold 
-                        ${rental.status === 'PENDING' ? 'bg-blue-100 text-blue-700' :
-                          rental.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                          rental.status === 'ACTIVE' ? 'bg-orange-100 text-orange-700' :
-                          rental.status === 'RETURNED' ? 'bg-gray-100 text-gray-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
+                        ${rental.status === 'RETURNED' ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-700'}`}>
                         {statusConfig[rental.status as keyof typeof statusConfig]?.label || rental.status}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="relative">
-                        <select
-                          value={rental.status}
-                          onChange={(e) => updateStatus(rental.id, e.target.value)}
-                          className="appearance-none w-full bg-white border border-gray-200 text-gray-700 py-2 pr-8 pl-3 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-purple-500 text-xs font-medium transition-all shadow-sm hover:border-purple-300 disabled:opacity-50 disabled:bg-gray-50"
-                          disabled={['RETURNED', 'CANCELLED'].includes(rental.status)}
-                        >
-                        {/* Always show current status */}
-                        <option value={rental.status}>{statusConfig[rental.status as keyof typeof statusConfig]?.label}</option>
-                        
-                        {/* Logic for allowed next steps */}
-                        {rental.status === 'PENDING' && (
-                          <>
-                            <option value="CONFIRMED">Đã xác nhận</option>
-                            <option value="CANCELLED">Hủy đơn</option>
-                          </>
-                        )}
-                        {rental.status === 'CONFIRMED' && (
-                          <option value="ACTIVE">Đang thuê</option>
-                        )}
-                        {rental.status === 'ACTIVE' && (
-                          <option value="RETURNED">Đã trả hàng</option>
-                        )}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                        </div>
-                      </div>
+                      <button
+                        onClick={() => handleDelete(rental.id)}
+                        className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                        Xóa
+                      </button>
                     </td>
                   </tr>
                 ))

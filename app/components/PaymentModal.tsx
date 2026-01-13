@@ -8,16 +8,26 @@ interface Props {
   onClose: () => void
   productName: string
   productPrice: number
-  selectedDates: number[]
+  selectedDates: string[]
+  productId: string
+  onSuccess?: () => void
 }
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
 }
 
-export default function PaymentModal({ isOpen, onClose, productName, productPrice, selectedDates }: Props) {
+export default function PaymentModal({ isOpen, onClose, productName, productPrice, selectedDates, productId, onSuccess }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<'deposit' | 'full'>('deposit')
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  const [formData, setFormData] = useState({
+    customerName: '',
+    phone: '',
+    email: '',
+    notes: ''
+  })
 
   if (!isOpen) return null
 
@@ -25,13 +35,42 @@ export default function PaymentModal({ isOpen, onClose, productName, productPric
   const totalAmount = productPrice * totalDays
   const depositAmount = totalAmount * 0.3
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
-    setTimeout(() => {
-      setSubmitted(false)
-      onClose()
-    }, 2000)
+    setIsSubmitting(true)
+    
+    try {
+      const response = await fetch('/api/rentals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          productId,
+          ...formData,
+          selectedDates,
+          totalPrice: totalAmount,
+          paymentMethod,
+          totalDays
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Đã có lỗi xảy ra khi đặt hàng')
+      }
+
+      setSubmitted(true)
+      setTimeout(() => {
+        setSubmitted(false)
+        onClose()
+        // Call success callback instead of reload
+        onSuccess?.()
+      }, 3000)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Có lỗi xảy ra')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (submitted) {
@@ -78,7 +117,10 @@ export default function PaymentModal({ isOpen, onClose, productName, productPric
               {selectedDates.length > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Ngày đã chọn:</span>
-                  <span className="font-semibold">{selectedDates.join(', ')}</span>
+                  <span className="font-semibold">{selectedDates.map(d => {
+                    const [year, month, day] = d.split('-')
+                    return `${day}/${month}`
+                  }).join(', ')}</span>
                 </div>
               )}
               <div className="flex justify-between pt-2 border-t">
@@ -150,23 +192,31 @@ export default function PaymentModal({ isOpen, onClose, productName, productPric
                 type="text"
                 placeholder="Họ và tên"
                 required
+                value={formData.customerName}
+                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <input
                 type="tel"
                 placeholder="Số điện thoại"
                 required
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <input
                 type="email"
                 placeholder="Email"
                 required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <textarea
                 placeholder="Ghi chú (tùy chọn)"
                 rows={3}
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
@@ -176,15 +226,22 @@ export default function PaymentModal({ isOpen, onClose, productName, productPric
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                disabled={isSubmitting}
+                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Hủy
               </button>
               <button
                 type="submit"
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all"
+                disabled={isSubmitting}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Xác nhận đặt thuê
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Đang xử lý...
+                  </>
+                ) : 'Xác nhận đặt thuê'}
               </button>
             </div>
           </form>

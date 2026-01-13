@@ -22,8 +22,10 @@ export default function ProductDetailPage() {
   const [showCalendar, setShowCalendar] = useState(false)
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [selectedDates, setSelectedDates] = useState<number[]>([])
+  const [selectedDates, setSelectedDates] = useState<string[]>([])
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [showWarning, setShowWarning] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   
   useEffect(() => {
     const fetchProduct = async () => {
@@ -41,11 +43,16 @@ export default function ProductDetailPage() {
     fetchProduct()
   }, [id])
 
-  const handleDateSelect = (dates: number[]) => {
+  const handleDateSelect = (dates: string[]) => {
     setSelectedDates(dates)
   }
 
   const handleBookNow = () => {
+    if (selectedDates.length === 0) {
+      setShowCalendar(true)
+      setShowWarning(true)
+      return
+    }
     setShowPaymentModal(true)
   }
 
@@ -66,6 +73,12 @@ export default function ProductDetailPage() {
         </Link>
       </div>
     )
+  }
+
+  
+  const handlePaymentSuccess = () => {
+    setRefreshKey(prev => prev + 1)
+    setSelectedDates([])
   }
 
   return (
@@ -221,7 +234,7 @@ export default function ProductDetailPage() {
             {showCalendar && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-xl">
-                        <AvailabilityCalendar productId={product.id} onDateSelect={handleDateSelect} />
+                        <AvailabilityCalendar key={refreshKey} productId={product.id} onDateSelect={handleDateSelect} />
                     </div>
                 </div>
             )}
@@ -272,7 +285,31 @@ export default function ProductDetailPage() {
         productName={product.name}
         productPrice={product.dailyPrice}
         selectedDates={selectedDates}
+        productId={product.id}
+        onSuccess={handlePaymentSuccess}
       />
+
+      {/* Custom Warning Modal */}
+      {showWarning && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-brand-dark/20 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowWarning(false)}></div>
+          <div className="relative bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-300 text-center">
+            <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-6 text-brand">
+              <CalendarIcon className="w-10 h-10" />
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tighter text-brand-dark mb-4">Thông báo</h3>
+            <p className="text-gray-500 text-sm leading-relaxed mb-8">
+              Vui lòng chọn ngày bạn muốn thuê trên lịch trước khi tiến hành đặt hàng.
+            </p>
+            <button 
+              onClick={() => setShowWarning(false)}
+              className="w-full h-14 bg-brand-dark text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] shadow-xl hover:bg-black transition-all transform hover:scale-105"
+            >
+              Tôi đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

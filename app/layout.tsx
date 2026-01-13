@@ -18,7 +18,7 @@ export default function RootLayout({
   const isAdminPage = pathname?.startsWith('/dashboard')
 
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.className} bg-[#fffafa]`}>
         {!isAdminPage && <Header />}
         {children}
