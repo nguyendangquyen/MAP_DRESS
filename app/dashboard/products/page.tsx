@@ -166,7 +166,7 @@ export default function ProductsManagementPage() {
           onClick={() => {
             setIsAdding(true)
             setEditingId(null)
-            setFormData({ name: '', categoryName: categories[0], description: '', price: '', stock: '', colors: '', images: [] })
+            setFormData({ name: '', categoryName: categories[0], description: '', price: '', stock: '', colors: '', images: [], isBestSeller: false })
           }}
           className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all"
         >
