@@ -71,9 +71,14 @@ export async function PATCH(
       data: { status },
       include: {
         user: true,
-        product: true
-      }
+        product: {
+          include: {
+            images: true, // 👈 BẮT BUỘC
+          },
+        },
+      },
     })
+
     
     // Map to frontend structure - matching GET response
     const formattedRental = {
