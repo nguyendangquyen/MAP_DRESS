@@ -1,0 +1,26 @@
+﻿Prisma schema loaded from prisma\schema.prisma
+Environment variables loaded from .env
+Datasource "db": MySQL database "railway" at "turntable.proxy.rlwy.net:45632"
+
+- Introspecting based on datasource defined in prisma\schema.prisma
+Γ£ö Introspected 13 models and wrote them into prisma\schema.prisma in 5.44s
+      
+*** WARNING ***
+
+These models were enriched with `@@map` information taken from the previous Prisma schema:
+  - "Availability"
+  - "Banner"
+  - "Category"
+  - "Conversation"
+  - "Message"
+  - "Payment"
+  - "ProductColor"
+  - "ProductImage"
+  - "ProductSize"
+  - "Product"
+  - "Rental"
+  - "Review"
+  - "User"
+
+Run prisma generate to generate Prisma Client.
+

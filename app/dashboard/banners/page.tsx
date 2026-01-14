@@ -1,61 +1,137 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PhotoIcon, PlusIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline'
 import Image from 'next/image'
 import AdminSidebar from '../../components/AdminSidebar'
 
-const mockBanners = [
-  {
-    id: '1',
-    title: 'Banner Trang Chủ',
-    imageUrl: null,
-    link: '/',
-    order: 1,
-    active: true,
-  },
-  {
-    id: '2',
-    title: 'Banner Sản Phẩm Mới',
-    imageUrl: null,
-    link: '/products',
-    order: 2,
-    active: true,
-  },
-]
+interface Banner {
+  id: string
+  title: string
+  imageUrl: string
+  link: string | null
+  order: number
+  active: boolean
+}
 
 export default function BannerManagementPage() {
-  const [banners, setBanners] = useState(mockBanners)
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [newBanner, setNewBanner] = useState({
     title: '',
     link: '',
-    order: banners.length + 1,
+    imageUrl: '',
+    order: 0,
+    active: true
   })
 
-  const handleAddBanner = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchBanners()
+  }, [])
+
+  const fetchBanners = async () => {
+    try {
+      const res = await fetch('/api/banners')
+      if (res.ok) {
+        const data = await res.json()
+        setBanners(data)
+        setNewBanner(prev => ({ ...prev, order: data.length + 1 }))
+      }
+    } catch (error) {
+      console.error('Error fetching banners:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    const uploadFormData = new FormData()
+    uploadFormData.append('file', file)
+
+    try {
+      const res = await fetch('/api/banners/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      })
+      const data = await res.json()
+      if (data.url) {
+        setNewBanner(prev => ({ ...prev, imageUrl: data.url }))
+      }
+    } catch (error) {
+      console.error('Upload failed:', error)
+      alert('Tải ảnh thất bại')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleAddBanner = async (e: React.FormEvent) => {
     e.preventDefault()
-    const banner = {
-      id: Date.now().toString(),
-      ...newBanner,
-      imageUrl: null,
-      active: true,
+    if (!newBanner.imageUrl) {
+      alert('Vui lòng tải lên hình ảnh banner')
+      return
     }
-    setBanners([...banners, banner])
-    setIsAdding(false)
-    setNewBanner({ title: '', link: '', order: banners.length + 2 })
+
+    try {
+      const res = await fetch('/api/banners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBanner),
+      })
+
+      if (res.ok) {
+        fetchBanners()
+        setIsAdding(false)
+        setNewBanner({ 
+          title: '', 
+          link: '', 
+          imageUrl: '', 
+          order: banners.length + 2,
+          active: true 
+        })
+      } else {
+        const errorData = await res.json()
+        alert(`Lỗi khi thêm banner: ${errorData.details || errorData.error}`)
+      }
+    } catch (error) {
+      console.error('Error adding banner:', error)
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Bạn có chắc muốn xóa banner này?')) {
-      setBanners(banners.filter(b => b.id !== id))
+      try {
+        const res = await fetch(`/api/banners/${id}`, {
+          method: 'DELETE',
+        })
+        if (res.ok) {
+          fetchBanners()
+        }
+      } catch (error) {
+        console.error('Error deleting banner:', error)
+      }
     }
   }
 
-  const toggleActive = (id: string) => {
-    setBanners(banners.map(b => 
-      b.id === id ? { ...b, active: !b.active } : b
-    ))
+  const toggleActive = async (banner: Banner) => {
+    try {
+      const res = await fetch(`/api/banners/${banner.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...banner, active: !banner.active }),
+      })
+      if (res.ok) {
+        fetchBanners()
+      }
+    } catch (error) {
+      console.error('Error updating banner:', error)
+    }
   }
 
   return (
@@ -99,25 +175,64 @@ export default function BannerManagementPage() {
                 type="text"
                 value={newBanner.link}
                 onChange={(e) => setNewBanner({ ...newBanner, link: e.target.value })}
-                required
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="/products"
+                placeholder="/products (Tùy chọn)"
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold mb-2">Hình ảnh</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-400 transition-colors cursor-pointer">
-                <PhotoIcon className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-                <p className="text-gray-600">Click để tải ảnh lên</p>
-                <p className="text-sm text-gray-500">PNG, JPG tối đa 5MB</p>
+              <div 
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors relative ${
+                  newBanner.imageUrl ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-400'
+                }`}
+              >
+                {newBanner.imageUrl ? (
+                  <div className="relative h-48 w-full">
+                    <img 
+                      src={newBanner.imageUrl} 
+                      alt="Preview" 
+                      className="h-full w-full object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNewBanner(prev => ({ ...prev, imageUrl: '' }))}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer block w-full h-full">
+                    {isUploading ? (
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <p className="text-purple-600">Đang tải lên...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <PhotoIcon className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                        <p className="text-gray-600">Click để tải ảnh lên</p>
+                        <p className="text-sm text-gray-500">PNG, JPG tối đa 5MB</p>
+                      </>
+                    )}
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                    />
+                  </label>
+                )}
               </div>
             </div>
 
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                disabled={isUploading}
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
               >
                 Thêm Banner
               </button>
@@ -135,11 +250,20 @@ export default function BannerManagementPage() {
 
       {/* Banners List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {banners.map((banner) => (
-          <div key={banner.id} className="bg-white rounded-2xl shadow-md overflow-hidden">
+        {isLoading ? (
+          <div className="col-span-2 text-center py-10">Đang tải...</div>
+        ) : banners.map((banner) => (
+          <div key={banner.id} className="bg-white rounded-2xl shadow-md overflow-hidden group">
             {/* Banner Preview */}
-            <div className="aspect-[16/6] bg-gradient-to-br from-purple-200 to-pink-200 relative flex items-center justify-center">
-              <span className="text-6xl">🎨</span>
+            <div className="aspect-[16/6] bg-gray-100 relative items-center justify-center overflow-hidden">
+               {banner.imageUrl ? (
+                 <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
+               ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                  <span className="text-4xl">🖼️</span>
+                </div>
+               )}
+              
               {!banner.active && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <span className="text-white font-bold text-xl">Đã tắt</span>
@@ -152,12 +276,11 @@ export default function BannerManagementPage() {
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h3 className="font-bold text-lg">{banner.title}</h3>
-                  <p className="text-sm text-gray-600">Link: {banner.link}</p>
-                  <p className="text-sm text-gray-600">Thứ tự: {banner.order}</p>
+                  <p className="text-sm text-gray-600">Link: {banner.link || 'Không có'}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => toggleActive(banner.id)}
+                    onClick={() => toggleActive(banner)}
                     className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${
                       banner.active
                         ? 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -174,21 +297,12 @@ export default function BannerManagementPage() {
                   </button>
                 </div>
               </div>
-
-              <div className="flex gap-2">
-                <button className="flex-1 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg font-semibold hover:bg-purple-100 transition-colors">
-                  Chỉnh sửa
-                </button>
-                <button className="flex-1 px-4 py-2 border border-purple-600 text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-colors">
-                  Đổi ảnh
-                </button>
-              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {banners.length === 0 && (
+      {!isLoading && banners.length === 0 && !isAdding && (
         <div className="text-center py-12 bg-white rounded-2xl">
           <PhotoIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
           <p className="text-gray-600 text-lg">Chưa có banner nào</p>

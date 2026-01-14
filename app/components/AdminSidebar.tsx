@@ -15,7 +15,8 @@ import {
   StarIcon,
   PhotoIcon,
   ArrowLeftIcon,
-  ClockIcon
+  ClockIcon,
+  VideoCameraIcon
 } from '@heroicons/react/24/outline'
 
 const menuItems = [
@@ -24,6 +25,7 @@ const menuItems = [
   { name: 'Quản lý sản phẩm', href: '/dashboard/products', icon: ShoppingBagIcon },
   { name: 'Quản lý danh mục', href: '/dashboard/categories', icon: FolderIcon },
   { name: 'Quản lý banner', href: '/dashboard/banners', icon: PhotoIcon },
+  { name: 'Quản lý Video', href: '/dashboard/videos', icon: VideoCameraIcon },
   { name: 'Quản lý đơn thuê', href: '/dashboard/rentals', icon: CalendarIcon },
   { name: 'Lịch sử đơn hàng', href: '/dashboard/history', icon: ClockIcon },
   { name: 'Thanh toán', href: '/dashboard/payments', icon: CreditCardIcon },
@@ -40,12 +42,9 @@ export default function AdminSidebar() {
       <div className="p-6">
         {/* Logo & Back to site */}
         <div className="mb-6">
-          <Link href="/" className="flex items-center gap-2 mb-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">👗</span>
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Admin
+          <Link href="/" className="flex items-center gap-2 mb-3 px-2">
+            <h2 className="text-2xl font-black uppercase tracking-tighter bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              MAP DRESS
             </h2>
           </Link>
           <Link 

@@ -1,5 +1,14 @@
 [
   {
+    "id": "f3aa78fa-d3e8-41c2-9d6d-e8afeacafdc5",
+    "productName": "váy tiệc cao cấp",
+    "description": "váy đẹp sang trọng",
+    "videoUrl": "/uploads/videos/7b332ff2-fd7d-405b-a860-143c30e45b86.mp4",
+    "featured": true,
+    "type": "review",
+    "createdAt": "2026-01-14"
+  },
+  {
     "id": "e655b503-58fe-458c-a710-4d73649b2f3f",
     "productName": "Thêm mẫu liên tục cho các nàng đi prom đây ạ ",
     "description": "Thêm mẫu liên tục cho các nàng đi prom đây ạ ",

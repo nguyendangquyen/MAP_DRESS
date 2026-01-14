@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { XMarkIcon, CreditCardIcon, BanknotesIcon } from '@heroicons/react/24/outline'
+import { getCurrentUser } from '../lib/auth-utils'
 
 interface Props {
   isOpen: boolean
@@ -28,6 +29,21 @@ export default function PaymentModal({ isOpen, onClose, productName, productPric
     email: '',
     notes: ''
   })
+
+  // Autofill user data
+  useEffect(() => {
+    if (isOpen) {
+        const user = getCurrentUser()
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                customerName: user.name || '',
+                email: user.email || '',
+                // phone is not always in user object depending on schema/updates, keeping manual input if missing
+            }))
+        }
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -204,14 +220,16 @@ export default function PaymentModal({ isOpen, onClose, productName, productPric
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
-              <input
-                type="email"
-                placeholder="Email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+              {!formData.email || !getCurrentUser() ? (
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+              ) : null}
               <textarea
                 placeholder="Ghi chú (tùy chọn)"
                 rows={3}

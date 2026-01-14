@@ -1,0 +1,14 @@
+﻿Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": MySQL database "railway" at "turntable.proxy.rlwy.net:45632"
+
+The database is already in sync with the Prisma schema.
+
+Running generate... (Use --skip-generate to skip the generators)
+[2K[1A[2K[GRunning generate... - Prisma Client
+[2K[1A[2K[GEPERM: operation not permitted, rename 'E:\laragon\www\MAP_DRESS\clothing-rental
+\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\.prisma\cli
+ent\query_engine-windows.dll.node.tmp20800' -> 
+'E:\laragon\www\MAP_DRESS\clothing-rental\node_modules\.pnpm\@prisma+client@5.22
+.0_prisma@5.22.0\node_modules\.prisma\client\query_engine-windows.dll.node'
+

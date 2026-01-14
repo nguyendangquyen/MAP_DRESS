@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { EnvelopeIcon, LockClosedIcon, ArrowRightIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
+import { signIn } from 'next-auth/react'
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -20,6 +22,18 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
+      // 1. NextAuth Sign In (Sets Cookie for Server Component protection)
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      })
+
+      if (result?.error) {
+        throw new Error('Email hoặc mật khẩu không chính xác')
+      }
+
+      // 2. Custom Login API (Gets User Data for Client-Side localStorage)
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -29,104 +43,130 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Đăng nhập thất bại')
+        // Should not happen if NextAuth succeeded, but safety check
+        console.error('Custom auth failed despite NextAuth success')
+      } else {
+        // Save to localStorage (Legacy frontend support)
+        localStorage.setItem('user', JSON.stringify(data))
+        window.dispatchEvent(new Event('authStateChanged'))
       }
-
-      // Save to localStorage
-      localStorage.setItem('user', JSON.stringify(data))
       
-      // Dispatch custom event to notify Header
-      window.dispatchEvent(new Event('authStateChanged'))
-      
-      // Redirect to homepage
-      router.push('/')
+      // Redirect based on role
+      if (data.role === 'ADMIN') {
+        router.push('/dashboard')
+      } else {
+        router.push('/')
+      }
     } catch (err: any) {
-      setError(err.message)
+      console.error(err)
+      setError(err.message || 'Đăng nhập thất bại')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Đăng Nhập</h1>
-            <p className="text-white/80">Chào mừng bạn trở lại!</p>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#fdf2f2]">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#f1b4af] rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
+        <div className="absolute top-[20%] right-[-10%] w-[35%] h-[35%] bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] p-10 border border-white/50">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-black uppercase tracking-tighter bg-gradient-to-r from-[#f1b4af] to-pink-500 bg-clip-text text-transparent mb-3">
+              MAP DRESS
+            </h1>
+            <p className="text-gray-500 font-medium">Chào mừng bạn quay trở lại!</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-xl text-sm text-center">
+              <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-sm font-medium text-center border border-red-100 flex items-center justify-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 {error}
               </div>
             )}
-            <div>
-              <label className="block text-white font-semibold mb-2">Email</label>
-              <div className="relative">
-                <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="w-full bg-white/20 border border-white/30 rounded-xl px-12 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent disabled:opacity-50"
-                  placeholder="you@example.com"
-                />
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2 ml-1">Email</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <EnvelopeIcon className="h-5 w-5 text-gray-400 group-focus-within:text-[#f1b4af] transition-colors" />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#f1b4af]/20 focus:border-[#f1b4af] transition-all"
+                    placeholder="name@example.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2 ml-1">Mật khẩu</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <LockClosedIcon className="h-5 w-5 text-gray-400 group-focus-within:text-[#f1b4af] transition-colors" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="w-full pl-11 pr-12 py-4 bg-gray-50 border border-transparent rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#f1b4af]/20 focus:border-[#f1b4af] transition-all"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeSlashIcon className="w-5 h-5" />
+                    ) : (
+                      <EyeIcon className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-white font-semibold mb-2">Mật khẩu</label>
-              <div className="relative">
-                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="w-full bg-white/20 border border-white/30 rounded-xl px-12 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent disabled:opacity-50"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="w-5 h-5" />
-                  ) : (
-                    <EyeIcon className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-[#f1b4af] hover:bg-[#e0a09b] text-white rounded-2xl py-4 font-bold text-lg shadow-[0_10px_20px_-10px_rgba(241,180,175,0.5)] hover:shadow-[0_15px_25px_-10px_rgba(241,180,175,0.6)] hover:translate-y-[-2px] active:translate-y-[0px] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
+              >
+                {isLoading ? (
+                  <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Đăng Nhập
+                    <ArrowRightIcon className="w-5 h-5" />
+                  </>
+                )}
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-white text-purple-600 rounded-xl px-6 py-3 font-bold text-lg hover:bg-gray-100 transition-all hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 disabled:scale-100"
-            >
-              {isLoading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
-              {!isLoading && <ArrowRightIcon className="w-5 h-5" />}
-            </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-white/80">
+          <div className="mt-8 text-center space-y-4">
+            <p className="text-gray-500 text-sm">
               Chưa có tài khoản?{' '}
-              <Link href="/register" className="text-white font-bold hover:underline">
-                Đăng ký ngay
+              <Link href="/register" className="text-[#f1b4af] font-bold hover:text-[#e0a09b] transition-colors">
+                Tạo tài khoản mới
               </Link>
             </p>
-          </div>
-
-          <div className="mt-4 text-center">
-            <Link href="/" className="text-white/80 text-sm hover:text-white transition-colors">
-              ← Về trang chủ
+            <Link href="/" className="inline-block text-gray-400 hover:text-gray-600 text-xs font-medium transition-colors">
+              ← Quay lại trang chủ
             </Link>
           </div>
         </div>

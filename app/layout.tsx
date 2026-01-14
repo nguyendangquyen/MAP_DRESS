@@ -15,14 +15,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const isAdminPage = pathname?.startsWith('/dashboard')
+  const isAuthPage = pathname?.startsWith('/dashboard') || pathname === '/login' || pathname === '/register'
 
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.className} bg-[#fffafa]`}>
-        {!isAdminPage && <Header />}
+        {!isAuthPage && <Header />}
         {children}
-        {!isAdminPage && <Footer />}
+        {!isAuthPage && <Footer />}
       </body>
     </html>
   )

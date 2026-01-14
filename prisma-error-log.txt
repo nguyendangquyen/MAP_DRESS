@@ -1,0 +1,13 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+Error: 
+EPERM: operation not permitted, rename 'E:\laragon\www\MAP_DRESS\clothing-rental\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\.prisma\client\query_engine-windows.dll.node.tmp9772' -> 'E:\laragon\www\MAP_DRESS\clothing-rental\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\.prisma\client\query_engine-windows.dll.node'
+
+
+
+Command failed: npx prisma generate
+Error: 
+EPERM: operation not permitted, rename 'E:\laragon\www\MAP_DRESS\clothing-rental\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\.prisma\client\query_engine-windows.dll.node.tmp9772' -> 'E:\laragon\www\MAP_DRESS\clothing-rental\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\.prisma\client\query_engine-windows.dll.node'
+
+

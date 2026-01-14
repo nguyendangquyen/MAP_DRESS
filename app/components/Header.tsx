@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ShoppingBagIcon, UserIcon, HomeIcon, PhoneIcon, VideoCameraIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useState, useRef, useEffect } from 'react'
+import NextImage from 'next/image'
 import { getCurrentUser, clearUserSession } from '../lib/auth-utils'
 
 export default function Header() {
@@ -113,8 +114,19 @@ export default function Header() {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-full transition-colors"
                 >
-                  <div className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center font-black shadow-sm">
-                    {user?.name?.charAt(0) || 'U'}
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm flex-shrink-0">
+                    {user?.image ? (
+                        <NextImage 
+                            src={user.image} 
+                            alt={user.name}
+                            fill
+                            className="object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-brand text-white flex items-center justify-center font-black">
+                             {user?.name?.charAt(0) || 'U'}
+                        </div>
+                    )}
                   </div>
                   <span className="hidden lg:block font-black text-[10px] uppercase tracking-widest text-gray-700 ml-1">
                     {user?.name || 'User'}

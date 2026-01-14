@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { ArrowLeftIcon, CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, CalendarIcon, SwatchIcon, ShieldCheckIcon, TruckIcon } from '@heroicons/react/24/outline'
-import AvailabilityCalendar from '../../components/AvailabilityCalendar'
-import ReviewForm from '../../components/ReviewForm'
-import PaymentModal from '../../components/PaymentModal'
+import AvailabilityCalendar from '@/components/AvailabilityCalendar'
+import ReviewForm from '@/components/ReviewForm'
+import PaymentModal from '@/components/PaymentModal'
+import ReviewSection from '@/components/ReviewSection'
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('vi-VN', {
@@ -242,41 +243,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* FEEDBACK SECTION */}
-        <div className="mt-32 pt-20 border-t border-gray-100">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 px-4">
-                <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-brand block mb-4">Social Proof</span>
-                    <h2 className="text-[18px] lg:text-5xl xl:text-6xl font-black tracking-tighter text-brand-dark leading-snug lg:leading-[0.9] uppercase">Đánh giá thực tế</h2>
-                </div>
-                <button onClick={() => setShowReviewForm(!showReviewForm)} className="text-[10px] font-black uppercase tracking-widest text-white bg-brand-dark py-3 px-8 rounded-full border-2 border-brand-dark hover:bg-white hover:text-brand-dark transition-all whitespace-nowrap shadow-lg">
-                    {showReviewForm ? 'Thoát chế độ viết' : 'Gửi lời khen sản phẩm'}
-                </button>
-            </div>
-
-            {showReviewForm && (
-                <div className="max-w-2xl mx-auto mb-20 bg-gray-50 p-10 rounded-[3rem] border border-gray-100">
-                    <ReviewForm productId={product.id} productName={product.name} />
-                </div>
-            )}
-
-            <div className="flex overflow-x-auto gap-8 pb-8 -mx-4 px-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-                {[1, 2, 3].map((_, i) => (
-                    <div key={i} className="min-w-[300px] md:min-w-[400px] bg-white p-10 rounded-[3rem] border border-gray-100 hover:border-brand/30 transition-all hover:shadow-xl group snap-start">
-                        <div className="flex gap-1 mb-6">
-                            {[1, 2, 3, 4, 5].map(s => <svg key={s} className="w-3 h-3 text-brand fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" /></svg>)}
-                        </div>
-                        <p className="text-gray-500 text-sm leading-relaxed mb-8 font-medium">"Trải nghiệm tuyệt vời từ lúc chọn đồ đến lúc mặc. Váy rất mới, thơm và đóng gói chỉn chu. Sẽ còn quay lại nhiều lần!"</p>
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-brand/10 group-hover:bg-brand/20 transition-colors flex items-center justify-center font-black text-xs text-brand-dark">ML</div>
-                            <div>
-                                <h4 className="text-[11px] font-black uppercase text-brand-dark tracking-tighter">Khanh Vy</h4>
-                                <span className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">Verified Client</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+        <ReviewSection productId={product.id} />
       </div>
 
       <PaymentModal

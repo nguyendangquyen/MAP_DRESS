@@ -1,4 +1,3 @@
-// Prisma Schema for Clothing Rental System
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User Model
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
@@ -21,21 +19,15 @@ model User {
   image         String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  
-  rentals       Rental[]
-  payments      Payment[]
   conversations Conversation[]
   messages      Message[]
-  
+  payments      Payment[]
+  rentals       Rental[]
+  reviews       Review[]
+
   @@map("users")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
-// Category Model
 model Category {
   id          String    @id @default(cuid())
   name        String
@@ -43,64 +35,186 @@ model Category {
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  
   products    Product[]
-  
+
   @@map("categories")
 }
 
-// Product Model
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  slug        String   @unique
-  categoryId  String
-
-  dailyPrice  Float
-  stock       Int      @default(1)
-  status      ProductStatus @default(AVAILABLE)
-  viewCount   Int      @default(0)
-  rentalCount Int      @default(0)
-  isBestSeller Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  rentals      Rental[]
+  id           String         @id @default(cuid())
+  name         String
+  description  String?
+  slug         String         @unique
+  categoryId   String
+  dailyPrice   Float
+  stock        Int            @default(1)
+  status       ProductStatus  @default(AVAILABLE)
+  viewCount    Int            @default(0)
+  rentalCount  Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  isBestSeller Boolean        @default(false)
   availability Availability[]
-
-  sizes        ProductSize[]
   colors       ProductColor[]
   images       ProductImage[]
-  
+  sizes        ProductSize[]
+  category     Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  rentals      Rental[]
+  reviews      Review[]
+
+  @@index([categoryId], map: "products_categoryId_fkey")
   @@map("products")
 }
+
 model ProductSize {
-  id        String   @id @default(cuid())
-  value     String   // S, M, L, XL
+  id        String  @id @default(cuid())
+  value     String
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, value])
   @@map("product_sizes")
 }
+
 model ProductColor {
-  id        String   @id @default(cuid())
-  value     String   // Đỏ, Xanh, Vàng
+  id        String  @id @default(cuid())
+  value     String
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, value])
   @@map("product_colors")
 }
+
 model ProductImage {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   url       String
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  @@index([productId], map: "product_images_productId_fkey")
   @@map("product_images")
+}
+
+model Rental {
+  id           String         @id @default(cuid())
+  userId       String
+  productId    String
+  startDate    DateTime
+  endDate      DateTime
+  totalDays    Int
+  totalPrice   Float
+  depositPaid  Float          @default(0)
+  status       RentalStatus   @default(PENDING)
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  availability Availability[]
+  payments     Payment[]
+  product      Product        @relation(fields: [productId], references: [id])
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "rentals_productId_fkey")
+  @@index([userId], map: "rentals_userId_fkey")
+  @@map("rentals")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  rentalId      String
+  userId        String
+  amount        Float
+  paymentType   PaymentType
+  paymentMethod String
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       @unique
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  rental        Rental        @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([rentalId], map: "payments_rentalId_fkey")
+  @@index([userId], map: "payments_userId_fkey")
+  @@map("payments")
+}
+
+model Availability {
+  id        String   @id @default(cuid())
+  productId String
+  date      DateTime
+  isBlocked Boolean  @default(false)
+  rentalId  String?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rental    Rental?  @relation(fields: [rentalId], references: [id])
+
+  @@unique([productId, date])
+  @@index([rentalId], map: "availability_rentalId_fkey")
+  @@map("availability")
+}
+
+model Conversation {
+  id            String    @id @default(cuid())
+  userId        String
+  lastMessageAt DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      Message[]
+
+  @@index([userId], map: "conversations_userId_fkey")
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId], map: "messages_conversationId_fkey")
+  @@index([senderId], map: "messages_senderId_fkey")
+  @@map("messages")
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  link      String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("banners")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int
+  comment   String?  @db.Text
+  reply     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "reviews_productId_fkey")
+  @@index([userId], map: "reviews_userId_fkey")
+  @@map("reviews")
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 enum ProductStatus {
@@ -110,62 +224,19 @@ enum ProductStatus {
   UNAVAILABLE
 }
 
-// Rental/Booking Model
-model Rental {
-  id          String       @id @default(cuid())
-  userId      String
-  productId   String
-  startDate   DateTime
-  endDate     DateTime
-  totalDays   Int
-  totalPrice  Float
-  depositPaid Float        @default(0)
-  status      RentalStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product     Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
-  payments    Payment[]
-  availability Availability[]
-  
-  @@map("rentals")
-}
-
 enum RentalStatus {
-  PENDING      // Waiting for payment
-  CONFIRMED    // Payment received
-  ACTIVE       // Customer has the item
-  RETURNED     // Item returned
-  CANCELLED    // Booking cancelled
-  OVERDUE      // Not returned on time
-}
-
-// Payment Model
-model Payment {
-  id            String        @id @default(cuid())
-  rentalId      String
-  userId        String
-  amount        Float
-  paymentType   PaymentType
-  paymentMethod String        // "VNPay", "MoMo", "Cash", etc.
-  status        PaymentStatus @default(PENDING)
-  transactionId String?       @unique
-  paidAt        DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
-  rental        Rental        @relation(fields: [rentalId], references: [id], onDelete: Cascade)
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("payments")
+  PENDING
+  CONFIRMED
+  ACTIVE
+  RETURNED
+  CANCELLED
+  OVERDUE
 }
 
 enum PaymentType {
-  DEPOSIT      // Đặt cọc
-  FULL         // Thanh toán đầy đủ
-  REMAINING    // Thanh toán phần còn lại
+  DEPOSIT
+  FULL
+  REMAINING
 }
 
 enum PaymentStatus {
@@ -173,49 +244,4 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
-}
-
-// Availability Model - Track which dates are booked for each product
-model Availability {
-  id         String   @id @default(cuid())
-  productId  String
-  date       DateTime
-  isBlocked  Boolean  @default(false) // Manual block for maintenance
-  rentalId   String?  // If booked, reference to rental
-  createdAt  DateTime @default(now())
-  
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  rental     Rental?  @relation(fields: [rentalId], references: [id], onDelete: SetNull)
-  
-  @@unique([productId, date])
-  @@map("availability")
-}
-
-// Conversation Model - Chat between user and admin
-model Conversation {
-  id            String    @id @default(cuid())
-  userId        String
-  lastMessageAt DateTime  @default(now())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages      Message[]
-  
-  @@map("conversations")
-}
-
-// Message Model - Chat messages
-model Message {
-  id             String       @id @default(cuid())
-  conversationId String
-  senderId       String
-  content        String
-  isRead         Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  
-  @@map("messages")
 }

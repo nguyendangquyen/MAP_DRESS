@@ -31,6 +31,17 @@ interface VideoReview {
   createdAt: string
 }
 
+interface Banner {
+  id: string
+  title: string
+  imageUrl: string
+  link: string | null
+  order: number
+}
+
+import BannerCarousel from './components/BannerCarousel'
+import SizeGuideGallery from './components/SizeGuideGallery'
+
 export default function HomePage() {
   const [featuredVideos, setFeaturedVideos] = useState<VideoReview[]>([])
   const [loadingVideos, setLoadingVideos] = useState(true)
@@ -39,12 +50,29 @@ export default function HomePage() {
   const [newArrivals, setNewArrivals] = useState<any[]>([])
   const [bestSellers, setBestSellers] = useState<any[]>([])
   const [loadingProducts, setLoadingProducts] = useState(true)
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [loadingBanners, setLoadingBanners] = useState(true)
 
   useEffect(() => {
     fetchFeaturedVideos()
     fetchProducts()
+    fetchBanners()
     setIsLoggedIn(!!getCurrentUser())
   }, [])
+
+  const fetchBanners = async () => {
+    try {
+      const res = await fetch('/api/banners')
+      if (res.ok) {
+        const data = await res.json()
+        setBanners(data.filter((b: any) => b.active))
+      }
+    } catch (error) {
+      console.error('Error fetching banners:', error)
+    } finally {
+      setLoadingBanners(false)
+    }
+  }
 
   const fetchProducts = async () => {
     try {
@@ -81,6 +109,53 @@ export default function HomePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#fffafa]">
       {/* Dynamic Hero Section */}
+      {loadingBanners ? (
+         <div className="h-[70vh] bg-gray-100 flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
+         </div>
+      ) : banners.length >= 2 ? (
+        <BannerCarousel banners={banners} />
+      ) : banners.length === 1 ? (
+        <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+             {/* Single Banner Image Background */}
+             <div className="absolute inset-0">
+                <img 
+                  src={banners[0].imageUrl} 
+                  alt={banners[0].title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/30 md:bg-black/20" /> {/* Overlay */}
+             </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+              <div className="space-y-6 md:space-y-10">
+                <AnimatedSection animation="fade-in-down">
+                  <span className="inline-block py-2 px-6 rounded-full glass-morphism text-white font-black text-[10px] tracking-[0.3em] uppercase mb-4 border border-white/20">
+                     ✨ Featured Collection
+                  </span>
+                </AnimatedSection>
+                
+                <AnimatedSection animation="fade-in-up" delay={200}>
+                    <h1 className="text-4xl md:text-8xl font-black mb-4 tracking-tighter leading-[0.9] text-white">
+                     {banners[0].title}
+                    </h1>
+                </AnimatedSection>
+                
+                <AnimatedSection animation="fade-in-up" delay={600}>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
+                    <Link
+                      href={banners[0].link || '/products'}
+                      className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-white text-black px-10 py-5 rounded-full font-black text-lg hover:bg-brand hover:text-white transition-all shadow-xl active:scale-95"
+                    >
+                      Khám Phá Ngay
+                      <ArrowRightIcon className="w-5 h-5 transform group-hover:translate-x-2 transition-transform" />
+                    </Link>
+                  </div>
+                </AnimatedSection>
+              </div>
+            </div>
+        </section>
+      ) : (
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 bg-brand-light/20">
@@ -136,46 +211,58 @@ export default function HomePage() {
         </div>
         
         {/* Scroll Indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-brand-dark/30 animate-bounce">
+        {/* <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-brand-dark/30 animate-bounce">
             <div className="w-6 h-10 border-2 border-brand/30 rounded-full flex justify-center p-1">
                 <div className="w-1.5 h-1.5 bg-brand-dark rounded-full"></div>
             </div>
-        </div>
+        </div> */}
       </section>
+      )}
 
       {/* Features - Meticulous Layout */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8 pb-6 md:pb-0">
             {[
                 { 
-                    icon: <TrophyIcon className="w-8 h-8 text-brand-dark" />, 
+                    icon: <TrophyIcon className="w-5 h-5 md:w-8 md:h-8 text-brand-dark" />, 
                     title: "Chất Lượng Cao Cấp", 
                     desc: "Mỗi bộ trang phục đều được kiểm định và chăm sóc tỉ mỉ.",
                     bg: "bg-brand-light/10"
                 },
                 { 
-                    icon: <ClockIcon className="w-8 h-8 text-brand-dark" />, 
+                    icon: <ClockIcon className="w-5 h-5 md:w-8 md:h-8 text-brand-dark" />, 
                     title: "Dịch Vụ Tận Tâm", 
                     desc: "Hỗ trợ chỉnh sửa số đo và tư vấn phong cách chuyên sâu.",
                     bg: "bg-brand-light/10"
                 },
                 { 
-                    icon: <UserGroupIcon className="w-8 h-8 text-brand-dark" />, 
+                    icon: <UserGroupIcon className="w-5 h-5 md:w-8 md:h-8 text-brand-dark" />, 
                     title: "Cộng Đồng MAP", 
                     desc: "Gia nhập cộng đồng phái đẹp yêu thời trang và sự thanh lịch.",
                     bg: "bg-brand-light/10"
+                },
+                { 
+                    icon: <SparklesIcon className="w-5 h-5 md:w-8 md:h-8 text-brand-dark" />, 
+                    title: "Vệ Sinh & Bảo Quản", 
+                    desc: "Trang phục luôn được giặt hấp, ủi phẳng và đóng gói cẩn thận.",
+                    bg: "bg-brand-light/10"
                 }
             ].map((feature, idx) => (
-                <AnimatedSection key={idx} animation="zoom-in" delay={idx * 150}>
-                    <div className="bg-white p-8 rounded-[2rem] border border-brand-light/30 h-full flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
-                        <div className={`w-16 h-16 ${feature.bg} rounded-3xl flex items-center justify-center mb-6`}>
-                            {feature.icon}
+                <div key={idx} className="w-full h-full">
+                    <AnimatedSection animation="zoom-in" delay={idx * 150} className="h-full">
+                        <div className="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-brand-light/30 h-full flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
+                            <div className={`w-10 h-10 md:w-16 md:h-16 ${feature.bg} rounded-2xl md:rounded-3xl flex items-center justify-center mb-3 md:mb-6`}>
+                                {feature.icon}
+                            </div>
+                            <div className="h-10 md:h-14 flex items-center justify-center mb-2 md:mb-3 text-center w-full">
+                                <h3 className="text-[10px] md:text-xl font-black text-gray-900 uppercase tracking-tight leading-tight">{feature.title}</h3>
+                            </div>
+                            <p className="text-gray-500 text-[10px] md:text-sm font-medium leading-relaxed hidden sm:block">{feature.desc}</p>
+                            <p className="text-gray-500 text-[9px] font-medium leading-relaxed sm:hidden line-clamp-2">{feature.desc}</p>
                         </div>
-                        <h3 className="text-xl font-black text-gray-900 mb-3 uppercase tracking-tight">{feature.title}</h3>
-                        <p className="text-gray-500 text-sm font-medium leading-relaxed">{feature.desc}</p>
-                    </div>
-                </AnimatedSection>
+                    </AnimatedSection>
+                </div>
             ))}
             </div>
         </div>
@@ -296,58 +383,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Size Consultation Section - Based on User Request */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <AnimatedSection animation="fade-in-down">
-                <div className="text-center mb-20 text-center">
-                    <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-[0.2em]">
-                        Tư Vấn Kích Cỡ Trang Phục
-                    </h2>
-                    <p className="text-brand font-bold tracking-widest uppercase text-xs mt-2">Dịch vụ tận tâm</p>
-                </div>
-            </AnimatedSection>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-                {[
-                    {
-                        path: "/images/size_support.png",
-                        title: "Hỗ Trợ 24/7",
-                        desc: "MAP DRESS luôn sẵn sàng hỗ trợ & tư vấn cho bạn về những mẫu sản phẩm và dịch vụ của cửa hàng."
-                    },
-                    {
-                        path: "/images/size_trends.png",
-                        title: "Cập Nhật Xu Hướng",
-                        desc: "Những xu hướng thời trang mới, những mẫu sản phẩm & những bst mới sẽ luôn được MAP DRESS nhập về sớm nhất."
-                    },
-                    {
-                        path: "/images/size_fit.png",
-                        title: "Kích Cỡ Phù Hợp",
-                        desc: "Bạn vẫn đang băn khoăn không biết kích cỡ nào là vừa vặn với bản thân? Đừng lo! Hãy để MAP DRESS giúp bạn!"
-                    },
-                    {
-                        path: "/images/size_team.png",
-                        title: "Đội Ngũ Nhân Sự Chuyên Nghiệp",
-                        desc: "Với đội ngũ chuyên viên tư vấn đầy kinh nghiệm, MAP DRESS tự tin cung cấp các dịch vụ chất lượng nhất."
-                    }
-                ].map((item, idx) => (
-                    <AnimatedSection key={idx} animation="fade-in-up" delay={idx * 150}>
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-full aspect-square rounded-3xl overflow-hidden mb-8 border border-gray-100 shadow-sm transition-transform hover:scale-105 duration-500">
-                                <img 
-                                    src={item.path} 
-                                    alt={item.title} 
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            <h3 className="text-sm font-black text-gray-900 mb-4 uppercase tracking-tighter">{item.title}</h3>
-                            <p className="text-gray-500 text-[10px] font-medium leading-[1.8] px-2">{item.desc}</p>
-                        </div>
-                    </AnimatedSection>
-                ))}
-            </div>
-        </div>
-      </section>
+      {/* Size Consultation Slider */}
+      <SizeGuideGallery />
 
       {/* Video Modal */}
       {selectedVideo && (
