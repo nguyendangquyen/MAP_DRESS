@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
+import type { RouteContext } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth-utils'
 
+type Params = {
+  id: string
+}
+
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteContext<Params>
 ) {
   try {
     await prisma.banner.delete({
@@ -24,7 +29,7 @@ export async function DELETE(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteContext<Params>
 ) {
   try {
     const body = await req.json()
@@ -38,7 +43,7 @@ export async function PUT(
         title,
         link,
         imageUrl,
-        order: order !== undefined ? parseInt(order) : undefined,
+        order: order !== undefined ? Number(order) : undefined,
         active,
       },
     })
