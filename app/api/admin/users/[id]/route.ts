@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
-import type { RouteHandlerContext } from 'next'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/auth.config'
 
 export async function DELETE(
   request: Request,
-  context: RouteHandlerContext<{ id: string }>
+  context
 ) {
   try {
     const session = await auth()
