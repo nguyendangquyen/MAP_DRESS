@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
+import type { RouteContext } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/auth.config'
 
+type Params = {
+  id: string
+}
+
 export async function DELETE(
   request: Request,
-  context: any
+  { params }: RouteContext<Params>
 ) {
   try {
     const session = await auth()
@@ -13,7 +18,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = context.params
+    const { id } = params
 
     if (id === session.user.id) {
       return NextResponse.json(
